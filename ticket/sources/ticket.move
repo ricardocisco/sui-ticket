@@ -2,7 +2,7 @@ module ticket::ticket;
 
 use std::string::{Self, String};
 use sui::balance::{Self, Balance};
-use sui::clock::Clock;
+use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
 use sui::event;
 use sui::sui::SUI;
@@ -46,6 +46,12 @@ public struct TicketSBT has key {
     image: Url,
     participated_at: u64,
 }
+public struct ListedTicket has key, store {
+    id: UID,
+    seller: address,
+    price: u64,
+    ticket: Ticket,
+}
 
 public struct TicketMinted has copy, drop {
     ticket_id: ID,
@@ -83,14 +89,13 @@ public fun create_event(
 }
 
 public fun buy_ticket(evento: &mut Evento, payment: Coin<SUI>, ctx: &mut TxContext) {
-    assert!(evento.tickets_sold <= evento.total_supply, ENoSupply);
+    assert!(evento.tickets_sold < evento.total_supply, ENoSupply);
     assert!(coin::value(&payment) == evento.price, EInsuficientFunds);
 
     let coin_balance = coin::into_balance(payment);
     balance::join(&mut evento.balance, coin_balance);
 
     evento.tickets_sold = evento.tickets_sold + 1;
-    let sender = ctx.sender();
 
     let ticket = Ticket {
         id: object::new(ctx),
@@ -102,16 +107,36 @@ public fun buy_ticket(evento: &mut Evento, payment: Coin<SUI>, ctx: &mut TxConte
 
     event::emit(TicketMinted {
         ticket_id: object::id(&ticket),
-        buyer: sender,
+        buyer: ctx.sender(),
         event_id: object::id(evento),
     });
 
-    transfer::public_transfer(ticket, sender);
+    transfer::public_transfer(ticket, ctx.sender());
+}
+
+public fun listing_ticket(ticket: Ticket, price: u64, ctx: &mut TxContext) {
+    let listing = ListedTicket {
+        id: object::new(ctx),
+        seller: ctx.sender(),
+        price: price,
+        ticket: ticket,
+    };
+    transfer::share_object(listing);
+}
+
+public fun buy_listing(listing: ListedTicket, payment: Coin<SUI>, ctx: &mut TxContext) {
+    assert!(coin::value(&payment) == listing.price, EInsuficientFunds);
+
+    let ListedTicket { id, seller, price: _, ticket } = listing;
+
+    transfer::public_transfer(payment, seller);
+
+    transfer::public_transfer(ticket, ctx.sender());
+
+    object::delete(id);
 }
 
 public fun check_in(ticket: Ticket, clock: &Clock, ctx: &mut TxContext) {
-    let sender = ctx.sender();
-
     let Ticket { id, evento_id, name, description, image } = ticket;
 
     object::delete(id);
@@ -125,8 +150,5 @@ public fun check_in(ticket: Ticket, clock: &Clock, ctx: &mut TxContext) {
         participated_at: clock::timestamp_ms(clock),
     };
 
-    transfer::transfer(sbt, sender);
+    transfer::transfer(sbt, ctx.sender());
 }
-
-// For Move coding conventions, see
-// https://docs.sui.io/concepts/sui-move-concepts/conventions
