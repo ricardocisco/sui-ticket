@@ -1,13 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+
 import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-interface EventoType {
-  id: string;
+const PACKAGE_ID = import.meta.env.VITE_CONTRACT_ID;
+export interface EventoType {
+  evento_id: string;
   name: string;
   description: string;
-  price: string;
-  supply: string;
+  price: number;
+  total_supply: number;
   image: string;
   owner?: string;
 }
@@ -32,36 +35,63 @@ export const useTicketData = () => {
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction();
 
-  const [eventInfo, setEventInfo] = useState<EventoType | null>(null);
+  const [eventInfo, setEventInfo] = useState<EventoType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
 
-  const fetchEvent = async (eventId: string) => {
+  // const fetchEvent = async (eventId: string) => {
+  //   try {
+  //     const eventResponse = await client.getObject({
+  //       id: eventId,
+  //       options: { showContent: true } // showOwner não ajuda muito em Shared Objects
+  //     });
+
+  //     if (eventResponse.data?.content?.dataType === "moveObject") {
+  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //       const fields = eventResponse.data.content.fields as any;
+
+  //       setEventInfo({
+  //         id: eventResponse.data.objectId,
+  //         name: fields.name,
+  //         description: fields.description,
+  //         price: fields.price,
+  //         supply: fields.total_supply,
+  //         image: fields.image?.url || fields.image,
+  //         owner: fields.creator || "Desconhecido (Shared Object)"
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Erro ao buscar detalhes do evento", error);
+  //   }
+  // };
+
+  const fetchEvent = async () => {
     try {
-      const eventResponse = await client.getObject({
-        id: eventId,
-        options: { showContent: true, showOwner: true }
+      const events = await client.queryEvents({
+        query: {
+          MoveEventType: `${PACKAGE_ID}::ticket::EventoCreated`
+        }
       });
 
-      if (eventResponse.data?.content?.dataType === "moveObject") {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fields = eventResponse.data.content.fields as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const eventsListed = events.data.map((event: any) => ({
+        evento_id: event.parsedJson.evento_id,
+        name: event.parsedJson.name,
+        description: event.parsedJson.description,
+        price: event.parsedJson.price,
+        total_supply: event.parsedJson.total_supply,
+        image: event.parsedJson.image,
+        owner: event.parsedJson.owner
+      }));
 
-        setEventInfo({
-          id: eventResponse.data.objectId,
-          name: fields.name,
-          description: fields.description,
-          price: fields.price,
-          supply: fields.total_supply,
-          image: fields.image,
-          owner:
-            eventResponse.data.owner &&
-            typeof eventResponse.data.owner === "object" &&
-            "AddressOwner" in eventResponse.data.owner
-              ? eventResponse.data.owner.AddressOwner
-              : undefined
-        });
-      }
-    } catch (error) {
-      console.error("erro ao buscar evento", error);
+      console.log("Eventos Listados:", eventsListed);
+
+      setEventInfo(eventsListed);
+    } catch (err: any) {
+      console.error("Erro ao buscar eventos:", err);
+      setError(err.message || "Erro desconhecido");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,9 +173,14 @@ export const useTicketData = () => {
     });
   };
 
+  useEffect(() => {
+    fetchEvent();
+  }, [client]);
+
   return {
     eventInfo,
-    fetchEvent,
+    loading,
+    error,
     createEvent,
     buyTicket,
     listingTicket,

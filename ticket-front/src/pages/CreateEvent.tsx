@@ -6,11 +6,15 @@ import { CreateMarketForm } from "../components/layout/CreateEventForm";
 
 export default function CreateEvent() {
   const account = useCurrentAccount();
+  const ADMIN_CAP_TYPE = `${
+    import.meta.env.VITE_CONTRACT_ID
+  }::ticket::AdminCap`;
 
   const { data: ownedObjects, isPending } = useSuiClientQuery(
     "getOwnedObjects",
     {
       owner: account?.address || "",
+      filter: { StructType: ADMIN_CAP_TYPE },
       options: { showType: true } // Boa prática
     },
     {
@@ -20,6 +24,7 @@ export default function CreateEvent() {
   );
 
   const adminCap = ownedObjects?.data?.[0]?.data?.objectId;
+  console.log("AdminCap: ", adminCap);
   const isAdmin = !!adminCap;
 
   return (

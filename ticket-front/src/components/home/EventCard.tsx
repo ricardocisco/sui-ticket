@@ -1,43 +1,30 @@
-import { Calendar, MapPin, Heart } from "lucide-react";
+import { Calendar, DollarSign, Heart, MapPin, Ticket } from "lucide-react";
 import { Button } from "../ui/button";
 import { Link } from "react-router-dom";
-
-export interface Event {
-  id: number;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  city: string;
-  price: number;
-  image: string;
-  category: string;
-  organizer: string;
-  isFree?: boolean;
-}
+import type { EventoType } from "../../hooks/useTicketContract";
 
 interface EventCardProps {
-  event: Event;
+  event: EventoType;
 }
 
 const EventCard = ({ event }: EventCardProps) => {
   return (
     <Link
-      to={`/event/${event.id}`}
+      to={`/event/${event.evento_id}`}
       className="group block rounded-2xl overflow-hidden bg-secondary border border-border/50 shadow-card hover:shadow-elevated hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
     >
       {/* Image Container */}
       <div className="relative aspect-4/3 overflow-hidden">
         <img
           src={event.image}
-          alt={event.title}
+          alt={event.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
 
         {/* Category Badge */}
         <div className="absolute top-4 left-4">
           <span className="px-3 py-1 rounded-full text-xs font-semibold text-primary-foreground">
-            {event.category}
+            {/* {event.category} */}
           </span>
         </div>
 
@@ -48,45 +35,36 @@ const EventCard = ({ event }: EventCardProps) => {
         >
           <Heart className="w-4 h-4 text-red-600" />
         </Button>
-
-        {/* Price Tag */}
-        <div className="absolute bottom-4 right-4">
-          {event.isFree ? (
-            <span className="px-3 py-1 rounded-full text-sm font-bold bg-green-500/20 text-green-400 border border-green-500/30">
-              Grátis
-            </span>
-          ) : (
-            <span className="px-3 py-1 rounded-full text-sm font-bold border border-border/50 text-foreground">
-              A partir de R$ {event.price}
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Content */}
       <div className="p-5">
         <h3 className="font-semibold text-lg text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-          {event.title}
+          {event.name}
         </h3>
 
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4 text-primary" />
-            <span>
-              {event.date} • {event.time}
+            <span>{event.description}</span>
+          </div>
+          <div className="flex items-center gap-2 text-md">
+            <Ticket className="w-4 h-4 text-primary" />
+            <span className="line-clamp-1">
+              {event.total_supply} Disponíveis
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4 text-primary" />
+          <div className="flex items-center gap-2 text-md">
+            <DollarSign className="w-4 h-4 text-primary" />
             <span className="line-clamp-1">
-              {event.location}, {event.city}
+              {(event.price / 1e9).toFixed(2)} SUI
             </span>
           </div>
         </div>
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            por {event.organizer}
+            {/* por {event.owner} */}
           </span>
           <Button
             variant="outline"
