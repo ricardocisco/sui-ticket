@@ -126,3 +126,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Remove as setas de input number no Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove as setas de input number no Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}

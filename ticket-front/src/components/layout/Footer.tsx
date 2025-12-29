@@ -13,7 +13,7 @@ const Footer = () => {
                 <Ticket className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="font-display font-bold text-xl text-foreground">
-                Even<span className="text-gradient">tick</span>
+                Pass<span className="text-gradient">Fi</span>
               </span>
             </Link>
             <p className="text-muted-foreground text-sm">
@@ -174,7 +174,7 @@ const Footer = () => {
 
         <div className="mt-12 pt-8 border-t border-border">
           <p className="text-center text-muted-foreground text-sm">
-            {`${new Date().getFullYear()} Eventick. Todos os direitos reservados.`}
+            {`${new Date().getFullYear()} PassFi. Todos os direitos reservados.`}
           </p>
         </div>
       </div>
